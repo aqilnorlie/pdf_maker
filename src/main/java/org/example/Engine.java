@@ -81,7 +81,6 @@ public class Engine {
                             System.out.println("CELL table : " + cell);
                         }
 
-//                        rowData.add(cell.tagName().trim());
                         rowData.add(cell.text().trim());
                     }
                     table.addRow(rowData);
