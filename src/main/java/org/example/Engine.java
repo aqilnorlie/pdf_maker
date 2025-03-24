@@ -74,19 +74,33 @@ public class Engine {
                 Elements rows = data.select("tr");
                 for (Element row : rows) {
                     List<String> rowData = new ArrayList<>();
+                    List<Map<String, String>> rowStyles = new ArrayList<>();
 
                     Elements cells = row.select("th, td");
                     for (Element cell : cells) {
-                        if(cell.tagName().contains("th")){
-                            System.out.println("CELL table : " + cell);
-                        }
 
+                        rowData.add(cell.tagName().trim());
                         rowData.add(cell.text().trim());
+
+                        Map<String, String> styles = new HashMap<>();
+                        if (globalStyles.containsKey(cell.tagName())) {
+                            styles.putAll(globalStyles.get(tag));  // Apply global styles
+                        }
+                        if (cell.hasAttr("style")) {
+                            styles.putAll(parseCss(cell.attr("style"))); // Apply inline styles
+                        }
+                        rowStyles.add(styles);
+
+                        System.out.println(rowData);
                     }
-                    table.addRow(rowData);
+                    table.addRow(rowData, rowStyles);
+                    table.addRowFormat(rowData);
+
 
                 }
-                System.out.println(table.rows);
+                System.out.println("Table Row : " + table.rows);
+                System.out.println("Format array : " + table.formatRows);
+                System.out.println("Format array : " + table.rowStyles);
                 elementObj.add(table);
             }
 
@@ -107,17 +121,13 @@ public class Engine {
                 if (globalStyles.containsKey(tag)) {
                     layout.applyStyles(globalStyles.get(tag));
                 }
-
                 layout.applyFormat(tag); //add format based on tag
                 elementObj.add(layout); // add layout object into list
-
             }
         }
 
         return elementObj;
     }
-
-
 
 
 
@@ -137,9 +147,7 @@ public class Engine {
             for(Object element : elementsObj){  //loop list
 
                 // check in the list of object LayoutElement
-                if(element instanceof LayoutElement){
-
-                    LayoutElement layoutElement = (LayoutElement) element; // casting element to be LayoutElement
+                if(element instanceof LayoutElement layoutElement){
 
                     PDType1Font font;
 
@@ -204,9 +212,8 @@ public class Engine {
                 }
 
                 // check in the list of object Image
-                if (element instanceof Image){
+                if (element instanceof Image img){
 
-                    Image img = (Image) element;
                     PDImageXObject pdImage = PDImageXObject.createFromFile(img.src, document);
 
                     float imgWidth = pdImage.getWidth();
@@ -232,10 +239,15 @@ public class Engine {
                 }
 
                 // check in the list of object Table
-                 if (element instanceof Table) {
-                    Table table = (Table) element;
+                 if (element instanceof Table table) {
+
+                     //count row
                     int rowCount = table.rows.size();
-                    int colCount = table.rows.isEmpty() ? 0 : table.rows.get(0).size();
+
+                     // Add this to remove th and td, if not it will count extra column
+                    table.rows = table.filterTable(table.rows);
+
+                    int colCount = table.rows.isEmpty() ? 0 : table.rows.getFirst().size();
 
                     if (rowCount == 0 || colCount == 0) continue;
 
@@ -263,13 +275,22 @@ public class Engine {
                         contentStream.stroke();
                     }
 
-                    contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12);
-                    contentStream.setNonStrokingColor(0f, 0f, 0f);
                     for (int i = 0; i < rowCount; i++) {
+
+                        List<String> originalRow = table.formatRows.get(i);
+                        boolean isHeader = table.isHeaderRow(originalRow);  // to check 'th'
                         List<String> row = table.rows.get(i);
+
+                        PDType1Font font = isHeader ? new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
+                                : new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+
+                        contentStream.setFont(font, 12);
+                        contentStream.setNonStrokingColor(0f, 0f, 0f);
+
+                        System.out.println("DATA CHECK : " + row);
                         for (int j = 0; j < row.size(); j++) {
+
                             contentStream.beginText();
-                            System.out.println("TEST : " + row.get(j));
                             contentStream.newLineAtOffset(startX + j * table.cellWidth + 2, startY - (i + 1) * table.cellHeight + 5);
                             contentStream.showText(row.get(j));
                             contentStream.endText();
