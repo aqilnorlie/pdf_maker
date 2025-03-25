@@ -155,19 +155,14 @@ public class Engine {
 
         try(PDDocument document = new PDDocument()){
 
-//            PDPage page = new PDPage(PDRectangle.A4);
-//            document.addPage(page);
-//            PDPageContentStream contentStream = new PDPageContentStream(document, page);
-//
-//            float yPosition = page.getMediaBox().getHeight() - 50;
-//            float margin = 50;
-//            float pageWidth = page.getMediaBox().getWidth();
+            PDPage page = new PDPage(PDRectangle.A4);
+            document.addPage(page);
+            PDPageContentStream contentStream = new PDPageContentStream(document, page);
 
-            PDPage page = null;  // Do not create a page yet
-            PDPageContentStream contentStream = null;
-            float yPosition = 0;
+            float yPosition = page.getMediaBox().getHeight() - 50;
             float margin = 50;
-            float pageWidth = 0;
+            float pageWidth = page.getMediaBox().getWidth();
+
 
             for(Object element : elementsObj){  //loop list
 
@@ -183,7 +178,6 @@ public class Engine {
 
                     page = new PDPage(pageSize);
                     document.addPage(page);
-//                    contentStream.close(); // Close previous stream
                     contentStream = new PDPageContentStream(document, page);
 
                     // Update Page Dimensions
@@ -387,7 +381,7 @@ public class Engine {
                             : PDRectangle.A4; // Portrait
 
                     if (contentStream != null) {
-                        contentStream.close(); // Close previous content stream before creating a new page
+                        contentStream.close();
                     }
 
                     page = new PDPage(pageSize);
@@ -489,10 +483,15 @@ public class Engine {
                 }
 
                 if (element instanceof Table table) {
+
+                    //count row
                     int rowCount = table.rows.size();
+
+                    // Add this to remove th and td, if not it will count extra column
                     table.rows = table.filterTable(table.rows);
 
                     int colCount = table.rows.isEmpty() ? 0 : table.rows.getFirst().size();
+
                     if (rowCount == 0 || colCount == 0) continue;
 
                     float tableHeight = rowCount * table.cellHeight;
@@ -508,13 +507,11 @@ public class Engine {
 
                     float startX = margin;
                     float startY = yPosition;
-
                     for (int i = 0; i <= rowCount; i++) {
                         contentStream.moveTo(startX, startY - i * table.cellHeight);
                         contentStream.lineTo(startX + tableWidth, startY - i * table.cellHeight);
                         contentStream.stroke();
                     }
-
                     for (int j = 0; j <= colCount; j++) {
                         contentStream.moveTo(startX + j * table.cellWidth, startY);
                         contentStream.lineTo(startX + j * table.cellWidth, startY - tableHeight);
@@ -522,15 +519,20 @@ public class Engine {
                     }
 
                     for (int i = 0; i < rowCount; i++) {
+
+                        List<String> originalRow = table.formatRows.get(i);
+                        boolean isHeader = table.isHeaderRow(originalRow);  // to check 'th'
                         List<String> row = table.rows.get(i);
-                        PDType1Font font = table.isHeaderRow(row)
-                                ? new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
+
+                        PDType1Font font = isHeader ? new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
                                 : new PDType1Font(Standard14Fonts.FontName.HELVETICA);
 
                         contentStream.setFont(font, 12);
                         contentStream.setNonStrokingColor(0f, 0f, 0f);
 
+                        System.out.println("DATA CHECK : " + row);
                         for (int j = 0; j < row.size(); j++) {
+
                             contentStream.beginText();
                             contentStream.newLineAtOffset(startX + j * table.cellWidth + 2, startY - (i + 1) * table.cellHeight + 5);
                             contentStream.showText(row.get(j));
