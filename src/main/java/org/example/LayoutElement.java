@@ -12,6 +12,7 @@ public class LayoutElement {
     boolean isItalic;
     String color;
     String textAlign;
+    boolean landscape;
 
     LayoutElement(String tag, String text) {
         this.tag = tag;
@@ -21,6 +22,7 @@ public class LayoutElement {
         this.isItalic = false;
         this.color = "black";
         this.textAlign = "left";
+        this.landscape = false;
     }
 
     @Override
@@ -96,10 +98,19 @@ public class LayoutElement {
                     this.isItalic = style.getValue().equalsIgnoreCase("italic");
                     break;
                 case "color":
+                    System.out.println("START COLOR");
+                    System.out.println(style.getValue());
                     this.color = style.getValue();
+                    System.out.println("END COLOR");
                     break;
                 case "text-align":
                     this.textAlign = style.getValue().toLowerCase();
+                    break;
+
+                case "size":
+                    if(style.getValue().equalsIgnoreCase("landscape")){
+                        this.landscape = true;
+                    }
                     break;
             }
         }
