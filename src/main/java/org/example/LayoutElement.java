@@ -98,20 +98,12 @@ public class LayoutElement {
                     this.isItalic = style.getValue().equalsIgnoreCase("italic");
                     break;
                 case "color":
-                    System.out.println("START COLOR");
-                    System.out.println(style.getValue());
                     this.color = style.getValue();
-                    System.out.println("END COLOR");
                     break;
                 case "text-align":
                     this.textAlign = style.getValue().toLowerCase();
                     break;
 
-                case "size":
-                    if(style.getValue().equalsIgnoreCase("landscape")){
-                        this.landscape = true;
-                    }
-                    break;
             }
         }
 

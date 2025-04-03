@@ -1,8 +1,5 @@
 package org.example;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class Page {
 
     boolean landscape = false;
@@ -12,9 +9,14 @@ public class Page {
     }
 
     //can be flexible by pass hashmap in parameter
-    public void setFormat(){
+    public void setFormat(String detail){
 
-        this.landscape = true;
+        String value = detail.substring(detail.indexOf(":") + 2, detail.length() - 1).trim();
+        System.out.println("set format : " + value);
+        if(value.equalsIgnoreCase("size=landscape")){
+            this.landscape = true;
+        }
+
 
     }
 
